@@ -1,0 +1,47 @@
+
+
+$('table#ctl00_ContentPlaceHolder1_grdAdd tbody tr:eq(0) th:eq(0)').after("<td style='width: 5px'><input type='checkbox' class='checkAll'></td>");
+$('table#ctl00_ContentPlaceHolder1_grdAdd tbody tr.even-row').each(function(i,v){
+  var requestId = $(v).find('td:eq(0)').find('span').data('id');
+  var icon = $(v).find('td:eq(0)').html().toString();
+  console.log(icon);
+  if(icon.indexOf('delete') != -1){
+    $(v).find('td:eq(0)').after("<td style='width: 5px'><input type='checkbox' class='checkSubset' data-id='" + requestId + "'></td>");
+  }
+});
+
+$(':checkbox.checkAll').click(function(e){
+    var state = $(this).prop('checked');
+  $(':checkbox.checkSubset').prop('checked', state);
+});
+$('#ctl00_ContentPlaceHolder1_btnBulkRemoveAdd').on('click', function(e){
+  e.preventDefault();
+  ids = []; //Reset from scratch
+  $.each($(':checkbox.checkSubset'), function(i,v){
+	var id = $(v).data('id');
+	if($(v).prop('checked'))
+		ids.push(id);
+  });
+  if(ids.length > 0){  
+            $.ajax({
+                cache: false,
+                url: 'showCompleteList.aspx/RemoveSelectedEntries',
+                type: 'POST',
+                data: JSON.stringify({ entries: ids.toString(), type: 'add' }),
+                contentType: 'application/json; charset=utf-8',
+                dataType: 'json',
+                success: function (res) {
+                    console.log(res);
+                    if(res.d == "Successful"){
+                      $('table#ctl00_ContentPlaceHolder1_grdAdd tbody tr.even-row').each(function(i,v){
+                      var requestId = $(v).find('td:eq(0)').find('span').data('id');
+                      if(ids.indexOf(requestId) != -1)
+                        $(this).remove();
+
+                    });
+                      ids = [];
+                  }
+                }
+            });
+  }
+});
